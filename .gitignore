@@ -1,0 +1,9 @@
+# rust
+target/
+Cargo.lock
+
+# rustfmt
+**/*.rs.bk
+
+# docs
+docs/build

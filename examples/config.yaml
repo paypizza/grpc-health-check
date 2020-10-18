@@ -1,0 +1,9 @@
+address: "127.0.0.1"
+port: 50055
+rpc_timeout: 3000
+stream: false
+tls_ca_cert: "/root/.ssh/google.pem"
+tls_client_cert: "/root/.ssh/client.pem"
+tls_client_key: "/root/.ssh/client.key"
+tls_domain_name: "google.com"
+user_agent: "grpc-health-check"

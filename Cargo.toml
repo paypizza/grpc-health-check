@@ -1,0 +1,24 @@
+[package]
+name = "grpc_health_check"
+version = "0.1.0"
+edition = "2018"
+include = ["build.rs"]
+
+[[bin]]
+name = "grpc-health-check"
+path = "src/main.rs"
+
+[dependencies]
+prost = "0.6.1"
+serde = { version = "1.0.115", features = ["derive"] }
+serde_yaml = "0.8.13"
+structopt = "0.3"
+tokio = { version = "0.2.22", features = ["full"] }
+tonic =  { git = "https://github.com/hyperium/tonic.git", rev = "f1275b611e38ec5fe992b2f10552bf95e8448b17", features = ["prost", "tls", "transport"] }
+
+[build-dependencies]
+tonic-build = { version = "0.3.1", features = ["transport", "prost"] }
+
+[profile.release]
+lto = true
+panic = "abort"

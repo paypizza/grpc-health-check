@@ -1,0 +1,58 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+  pull_request: {}
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-unknown-linux-musl
+          override: true
+      - uses: actions-rs/cargo@v1
+        name: Run actions-rs/cargo@v1 build (64-bit Linux with MUSL)
+        with:
+          use-cross: true
+          command: build
+          args: --target x86_64-unknown-linux-musl
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: aarch64-unknown-linux-gnu
+          override: true
+      - uses: actions-rs/cargo@v1
+        name: Run actions-rs/cargo@v1 build (ARM64 Linux with MUSL)
+        with:
+          use-cross: true
+          command: build
+          args: --target aarch64-unknown-linux-musl
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
+        name: Run actions-rs/cargo@v1 check
+        with:
+          command: check
+      - run: rustup component add rustfmt
+      - uses: actions-rs/cargo@v1
+        name: Run actions-rs/cargo@v1 fmt
+        with:
+          command: fmt
+          args: --all -- --check
+      - uses: actions-rs/cargo@v1
+        name: Run actions-rs/cargo@v1 test
+        with:
+          use-cross: true
+          command: test
