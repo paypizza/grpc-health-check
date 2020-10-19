@@ -57,6 +57,13 @@ $ dnf copr enable paypizza/community
 $ dnf install grpc-health-check
 ```
 
+#### Ubuntu
+
+```sh
+$ add-apt-repository ppa:paypizza/community
+$ apt-get install grpc-health-check
+```
+
 #### openSUSE
 
 ```sh

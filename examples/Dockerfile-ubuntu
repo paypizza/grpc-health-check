@@ -1,0 +1,12 @@
+# Ubuntu 18.04 (Bionic)
+
+FROM docker.io/ubuntu:18.04
+
+# Install grpc-health-check
+# Repository: https://launchpad.net/~paypizza/+archive/ubuntu/community
+
+RUN apt-get update && \
+    apt-get install software-properties-common -y && \
+    add-apt-repository ppa:paypizza/community -y && \
+    apt-get install grpc-health-check -y && \
+    rm -rf /var/lib/apt/lists/*
