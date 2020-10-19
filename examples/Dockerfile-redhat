@@ -1,0 +1,13 @@
+# Red Hat Universal Base Image 8
+
+FROM registry.redhat.io/ubi8/ubi
+
+# Install grpc-health-check
+# Repository: https://copr.fedorainfracloud.org/coprs/paypizza/community/
+
+RUN dnf upgrade -y && \
+    dnf install dnf-plugins-core -y && \
+    dnf copr enable paypizza/community -y && \
+    dnf install grpc-health-check -y && \
+    dnf remove dnf-plugins-core -y && \
+    dnf clean all

@@ -8,6 +8,7 @@ Most grpc-health-check commands can be run as a regular user, without requiring 
 Exits with a status of 0 (true) or 1 (false), depending on the evaluation of the gRPC health checking protocol status.
 
 [![CI](https://github.com/paypizza/grpc-health-check/workflows/CI/badge.svg?branch=master)](https://github.com/paypizza/grpc-health-check/actions)
+[![Copr build status](https://copr.fedorainfracloud.org/coprs/paypizza/community/package/grpc-health-check/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/paypizza/community/package/grpc-health-check/)
 
 ## Documentation
 
@@ -45,6 +46,22 @@ spec:
         command: ["grpc-health-check", "--port=5400"]
       periodSeconds: 1 // Check once every second
       initialDelaySeconds: 4
+```
+
+### Linux
+
+#### RHEL (Red Hat Enterprise Linux, CentOS, Fedora)
+
+```sh
+$ dnf copr enable paypizza/community
+$ dnf install grpc-health-check
+```
+
+#### openSUSE
+
+```sh
+$ zypper ar https://copr.fedorainfracloud.org/coprs/paypizza/community/repo/opensuse-leap/
+$ zypper in grpc-health-check
 ```
 
 ## Flags

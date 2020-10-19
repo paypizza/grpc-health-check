@@ -1,0 +1,11 @@
+# openSUSE Leap 15.2
+
+FROM docker.io/opensuse/leap:15.2
+
+# Install grpc-health-check
+# Repository: https://copr.fedorainfracloud.org/coprs/paypizza/community/
+
+RUN zypper up -y && \
+    zypper ar https://copr.fedorainfracloud.org/coprs/paypizza/community/repo/opensuse-leap-15.2/paypizza-community-opensuse-leap-15.2.repo && \
+    zypper --gpg-auto-import-keys -n in grpc-health-check && \
+    zypper clean
