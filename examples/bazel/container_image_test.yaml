@@ -1,0 +1,7 @@
+schemaVersion: '2.0.0'
+commandTests:
+  - name: 'cli'
+    setup: [["apt-get", "update"], ["apt-get", "install", "-y", "-q", "grpc-health-check"]]
+    command: 'grpc-health-check'
+    args: ['--help']
+    expectedOutput: ['grpc-health-check 0.1.0']

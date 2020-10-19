@@ -1,0 +1,37 @@
+workspace(name = "example")
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
+
+http_archive(
+    name = "io_bazel_rules_docker",
+    sha256 = "4975b23f8eff1f0763b5654fbdf325c0089631dacd4b37f9903c404401a93f05",
+    strip_prefix = "rules_docker-cc45596d140b3b8651eb7b51b561f1bf72d1eea9",
+    urls = ["https://github.com/bazelbuild/rules_docker/archive/cc45596d140b3b8651eb7b51b561f1bf72d1eea9.tar.gz"],
+)
+
+load("@io_bazel_rules_docker//toolchains/docker:toolchain.bzl", docker_toolchain_configure = "toolchain_configure")
+
+load("@io_bazel_rules_docker//repositories:repositories.bzl", container_repositories = "repositories")
+
+container_repositories()
+
+load("@io_bazel_rules_docker//repositories:deps.bzl", container_deps = "deps")
+
+container_deps()
+
+http_archive(
+    name = "ubuntu1804",
+    sha256 = "4db6684239c3206ee59d3cbb2c0ec5375a61f5021a22dea0becb8c40ae8e28c7",
+    strip_prefix = "base-images-docker-1b29722392f87ba99563480888d144b913b3fe6d/ubuntu1804",
+    urls = ["https://github.com/GoogleContainerTools/base-images-docker/archive/1b29722392f87ba99563480888d144b913b3fe6d.tar.gz"],
+)
+
+load("@ubuntu1804//:deps.bzl", ubuntu1804_deps = "deps")
+
+ubuntu1804_deps()
+
+http_file(
+    name = "ubuntu_launchpad_gpg",
+    sha256 = "e6b712ce570c4a1b31e5364dff9dd95f89a692a6ac6655a6e85d83768e0ddb25",
+    urls = ["https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xCDF69166EB6A449F"],
+)

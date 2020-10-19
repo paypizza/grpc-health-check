@@ -1,0 +1,45 @@
+package(default_visibility = ["//visibility:private"])
+
+load("@io_bazel_rules_docker//docker/package_managers:apt_key.bzl", "add_apt_key")
+load("@io_bazel_rules_docker//docker/package_managers:download_pkgs.bzl", "download_pkgs")
+load("@io_bazel_rules_docker//docker/package_managers:install_pkgs.bzl", "install_pkgs")
+load("@io_bazel_rules_docker//container:container.bzl", "container_image")
+load("@io_bazel_rules_docker//contrib:test.bzl", "container_test")
+
+add_apt_key(
+    name = "grpc_base_ubuntu_gpg_image",
+    image = "@ubuntu1804//:ubuntu1804_vanilla.tar",
+    keys = [
+        "@ubuntu_launchpad_gpg//file",
+    ],
+)
+
+download_pkgs(
+    name = "grpc_base_ubuntu_download_pkgs",
+    additional_repos = [
+        "deb [arch=amd64] http://ppa.launchpad.net/paypizza/community/ubuntu bionic main",
+    ],
+    image_tar = ":grpc_base_ubuntu_gpg_image.tar",
+    packages = [
+        "grpc-health-check",
+    ],
+)
+
+install_pkgs(
+    name = "grpc_base_install_pkgs",
+    image_tar = "@ubuntu1804//:ubuntu1804_vanilla.tar",
+    installables_tar = ":grpc_base_ubuntu_download_pkgs.tar",
+    output_image_name = "grpc_base_install_pkgs",
+)
+
+container_image(
+    name = "grpc_base_container_image",
+    base = ":grpc_base_install_pkgs.tar",
+    visibility = ["//visibility:public"],
+)
+
+container_test(
+    name = "grpc_base_container_image_test",
+    configs = [":container_image_test.yaml"],
+    image = ":grpc_base_container_image",
+)
