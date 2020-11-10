@@ -47,7 +47,7 @@ jobs:
       - uses: arduino/setup-protoc@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - run: echo "::set-env name=PROTOC::$(which protoc)"
+      - run: echo "PROTOC=$(which protoc)" >> $GITHUB_ENV
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
@@ -73,5 +73,5 @@ jobs:
       - uses: actions-rs/clippy-check@v1
         name: Run actions-rs/cargo@v1 clippy
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           args: --all-features --workspace
+          token: ${{ secrets.GITHUB_TOKEN }}
