@@ -3,7 +3,7 @@
 mod error;
 mod input;
 
-pub mod health_service {
+mod health_service {
     tonic::include_proto!("grpc.health.v1");
 
     use health_check_response::ServingStatus;
@@ -11,7 +11,7 @@ pub mod health_service {
     pub fn serving_status(status: i32) -> Result<(), Box<dyn std::error::Error>> {
         match ServingStatus::from_i32(status).unwrap_or(ServingStatus::Unknown) {
             ServingStatus::Serving => Ok(()),
-            status @ _ => Err(format!("{:?}", status).into()),
+            status => Err(format!("{:?}", status).into()),
         }
     }
 }

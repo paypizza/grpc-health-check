@@ -1,0 +1,77 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+  pull_request: {}
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.47.0
+          override: true
+      - run: rustup target add x86_64-unknown-linux-gnu x86_64-unknown-linux-musl aarch64-unknown-linux-gnu aarch64-unknown-linux-musl
+      - uses: actions-rs/cargo@v1
+        name: Run actions-rs/cargo@v1 build (64-bit Linux with glibc)
+        with:
+          command: build
+          args: --target x86_64-unknown-linux-gnu
+      - uses: actions-rs/cargo@v1
+        name: Run actions-rs/cargo@v1 build (64-bit Linux with MUSL)
+        with:
+          command: build
+          use-cross: true
+          args: --target x86_64-unknown-linux-musl
+      - uses: actions-rs/cargo@v1
+        name: Run actions-rs/cargo@v1 build (ARM64 Linux with glibc)
+        with:
+          command: build
+          use-cross: true
+          args: --target aarch64-unknown-linux-gnu
+      - uses: actions-rs/cargo@v1
+        name: Run actions-rs/cargo@v1 build (ARM64 Linux with MUSL)
+        with:
+          command: build
+          use-cross: true
+          args: --target aarch64-unknown-linux-musl
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: arduino/setup-protoc@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: echo "::set-env name=PROTOC::$(which protoc)"
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          components: rustfmt, clippy
+          override: true
+      - uses: actions-rs/cargo@v1
+        name: Run actions-rs/cargo@v1 test
+        with:
+          command: test
+          args: --verbose
+        env:
+          CARGO_INCREMENTAL: '0'
+          RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off'
+      - uses: actions-rs/grcov@v0.1
+      - uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - uses: actions-rs/cargo@v1
+        name: Run actions-rs/cargo@v1 fmt
+        with:
+          command: fmt
+          args: --all -- --check
+      - uses: actions-rs/clippy-check@v1
+        name: Run actions-rs/cargo@v1 clippy
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all-features --workspace

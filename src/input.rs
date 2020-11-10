@@ -67,11 +67,11 @@ impl Opts {
         }
 
         if let Some(value) = &config.port {
-            self.port = Option::from(value.clone());
+            self.port = Option::from(*value);
         }
 
         if let Some(value) = &config.rpc_timeout {
-            self.rpc_timeout = value.clone();
+            self.rpc_timeout = *value;
         }
 
         if let Some(value) = &config.service_name {
@@ -79,7 +79,7 @@ impl Opts {
         }
 
         if let Some(value) = &config.stream {
-            self.stream = Option::from(value.clone());
+            self.stream = Option::from(*value);
         }
 
         if let Some(value) = &config.tls_ca_cert {
