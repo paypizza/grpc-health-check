@@ -1,0 +1,6 @@
+# Alpine
+
+FROM docker.io/alpine:latest
+
+RUN apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing \
+    grpc-health-check

@@ -50,6 +50,12 @@ spec:
 
 ### Linux
 
+#### Alpine
+
+```sh
+$ apk add grpc-health-check --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
+```
+
 #### Fedora
 
 ```sh
