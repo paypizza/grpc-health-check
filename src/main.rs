@@ -77,11 +77,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 true => {
                     if opts.tls_client_cert.is_none() {
                         return Err(Error::new(ErrorKind::InvalidConfig)
-                            .with("Client certificate: Empty file path")
+                            .with("TLS client certificate: Empty file path")
                             .into());
                     } else if opts.tls_client_key.is_none() {
                         return Err(Error::new(ErrorKind::InvalidConfig)
-                            .with("Client key: Empty file path")
+                            .with("TLS client key: Empty file path")
                             .into());
                     }
 
