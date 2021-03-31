@@ -1,7 +1,11 @@
 schemaVersion: '2.0.0'
+fileExistenceTests:
+  - name: 'grpc-health-check'
+    path: '/usr/bin/grpc-health-check'
+    shouldExist: true
+    isExecutableBy: 'owner'
 commandTests:
-  - name: 'cli'
-    setup: [["apt-get", "update"], ["apt-get", "install", "-y", "-q", "grpc-health-check"]]
+  - name: 'grpc-health-check'
     command: 'grpc-health-check'
-    args: ['--help']
-    expectedOutput: ['grpc-health-check 0.1.0']
+    exitCode: 1
+    expectedError: ['Error: grpc_health_check::Error\((.*?),([^\)]+)\)']
