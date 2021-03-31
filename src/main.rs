@@ -69,9 +69,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let channel = match opts.tls_ca_cert.is_some() {
         true => {
-            let server_root_ca_cert = tokio::fs::read(opts.tls_ca_cert.unwrap())
-                .await
-                .map_err(Error::from_io)?;
+            let server_root_ca_cert =
+                fs::read(opts.tls_ca_cert.unwrap()).map_err(Error::from_io)?;
             let server_root_ca_cert = Certificate::from_pem(server_root_ca_cert);
 
             let tls = match opts.tls_client_cert.is_some() || opts.tls_client_key.is_some() {
