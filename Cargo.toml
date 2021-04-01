@@ -3,6 +3,12 @@ name = "grpc_health_check"
 version = "0.1.0"
 edition = "2018"
 include = ["build.rs"]
+publish = false
+
+[workspace]
+members = [
+  "tests/integration_tests"
+]
 
 [[bin]]
 name = "grpc-health-check"
@@ -11,7 +17,7 @@ doctest = false
 
 [dependencies]
 mimalloc = { version = "0.1.25", optional = true }
-prost = "0.7.0"
+prost = "0.7"
 serde = { version = "1.0.125", features = ["derive"] }
 serde_yaml = "0.8.17"
 structopt = "0.3"
