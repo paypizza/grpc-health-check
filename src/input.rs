@@ -7,7 +7,7 @@ use structopt::StructOpt;
 #[structopt(name = "grpc-health-check", setting = structopt::clap::AppSettings::TrailingVarArg)]
 pub struct Opts {
     /// Address to the gRPC server.
-    #[structopt(long, default_value = "[::1]")]
+    #[structopt(long, default_value = "localhost")]
     pub address: String,
 
     /// File path to the YAML configuration file.

@@ -33,7 +33,7 @@ Enable verbose mode.
 
 **--address**=*address*
 
-Address to the gRPC server (default *[::1]*).
+Address to the gRPC server (default *localhost*).
 
 **--config**=*config*
 
