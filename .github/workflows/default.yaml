@@ -65,10 +65,18 @@ jobs:
         env:
           CARGO_INCREMENTAL: '0'
           RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off'
-      - uses: actions-rs/grcov@v0.1
-      - uses: codecov/codecov-action@v1
+      - run: cargo install --locked grcov
+      - run: |
+          cargo install --locked grcov
+          grcov ./target/debug -s . --llvm --branch --guess-directory-when-missing --ignore-not-existing -t lcov -o coverage.txt
+      - run: |
+          sudo apt install lcov -y
+          lcov --extract coverage.txt -o coverage.txt 'src/*'
+      - if: success()
+        uses: codecov/codecov-action@v2.1.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          file: coverage.txt
       - uses: actions-rs/cargo@v1
         name: Run actions-rs/cargo@v1 fmt
         with:
