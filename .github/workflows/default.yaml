@@ -50,7 +50,7 @@ jobs:
       - run: echo "PROTOC=$(which protoc)" >> $GITHUB_ENV
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: nightly-2022-03-22
           components: rustfmt, clippy
           override: true
       - uses: actions-rs/cargo@v1
