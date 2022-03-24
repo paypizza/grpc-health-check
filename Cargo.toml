@@ -16,16 +16,16 @@ path = "src/main.rs"
 doctest = false
 
 [dependencies]
-mimalloc = { version = "0.1.26", optional = true }
-prost = "0.8"
-serde = { version = "1.0.126", features = ["derive"] }
-serde_yaml = "0.8.17"
+mimalloc = { version = "0.1.28", optional = true }
+prost = "0.9"
+serde = { version = "1.0.136", features = ["derive"] }
+serde_yaml = "0.8.23"
 structopt = "0.3"
-tokio = { version = "1.8.1", features = ["full"] }
-tonic = { version = "0.5.0", features = ["prost", "tls", "transport"] }
+tokio = { version = "1.17.0", features = ["full"] }
+tonic = { version = "0.6.2", features = ["prost", "tls", "transport"] }
 
 [build-dependencies]
-tonic-build = { version = "0.5.1", features = ["transport", "prost"] }
+tonic-build = { version = "0.6.2", features = ["transport", "prost"] }
 
 [profile.release]
 lto = true
