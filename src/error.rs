@@ -1,22 +1,22 @@
 use std::{error, fmt};
 
-type Source = Box<dyn error::Error + Send + Sync + 'static>;
+type GenericError = Box<dyn error::Error + Send + Sync>;
 
 #[derive(Debug)]
 pub enum ErrorKind {
     /// Invalid configuration.
     InvalidConfig,
-    /// crate::http.
-    HTTP,
     /// crate::std::io::Error.
-    IO,
+    Io,
+    /// crate::http.
+    Http,
     /// crate::tonic::transport::Error.
     Transport,
 }
 
 struct ErrorImpl {
     kind: ErrorKind,
-    source: Option<Source>,
+    source: Option<GenericError>,
 }
 
 pub struct Error {
@@ -30,30 +30,28 @@ impl Error {
         }
     }
 
-    pub(crate) fn with(mut self, source: impl Into<Source>) -> Self {
+    pub(crate) fn with(mut self, source: impl Into<GenericError>) -> Self {
         self.inner.source = Some(source.into());
         self
     }
 
-    pub(crate) fn from_http(source: impl Into<Box<dyn std::error::Error + Send + Sync>>) -> Self {
-        Error::new(ErrorKind::HTTP).with(source)
+    pub(crate) fn from_http(source: impl Into<GenericError>) -> Self {
+        Error::new(ErrorKind::Http).with(source)
     }
 
-    pub(crate) fn from_io(source: impl Into<Box<dyn std::error::Error + Send + Sync>>) -> Self {
-        Error::new(ErrorKind::IO).with(source)
+    pub(crate) fn from_io(source: impl Into<GenericError>) -> Self {
+        Error::new(ErrorKind::Io).with(source)
     }
 
-    pub(crate) fn from_transport(
-        source: impl Into<Box<dyn std::error::Error + Send + Sync>>,
-    ) -> Self {
+    pub(crate) fn from_transport(source: impl Into<GenericError>) -> Self {
         Error::new(ErrorKind::Transport).with(source)
     }
 
     fn description(&self) -> &str {
         match &self.inner.kind {
             ErrorKind::InvalidConfig => "config error",
-            ErrorKind::HTTP => "HTTP error",
-            ErrorKind::IO => "io error",
+            ErrorKind::Io => "io error",
+            ErrorKind::Http => "http error",
             ErrorKind::Transport => "transport error",
         }
     }

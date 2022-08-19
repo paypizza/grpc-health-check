@@ -5,90 +5,72 @@ on:
       - master
   pull_request: {}
 jobs:
-  build:
-    name: build
-    runs-on: ubuntu-latest
-    continue-on-error: true
+  cargo:
+    name: cargo
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v2
+      - if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt install -y protobuf-compiler
+          echo "PROTOC=$(which protoc)" >> $GITHUB_ENV
+      - if: matrix.os == 'macos-latest'
+        run: |
+          brew install protobuf
+          echo "PROTOC=$(which protoc)" >> $GITHUB_ENV
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
-      - run: rustup target add x86_64-unknown-linux-gnu x86_64-unknown-linux-musl aarch64-unknown-linux-gnu aarch64-unknown-linux-musl
-      - uses: actions-rs/cargo@v1
-        name: Run actions-rs/cargo@v1 build (64-bit Linux with glibc)
+      - name: Run cargo build
+        uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --target x86_64-unknown-linux-gnu
-      - uses: actions-rs/cargo@v1
-        name: Run actions-rs/cargo@v1 build (64-bit Linux with MUSL)
-        with:
-          command: build
-          use-cross: true
-          args: --target x86_64-unknown-linux-musl
-      - uses: actions-rs/cargo@v1
-        name: Run actions-rs/cargo@v1 build (ARM64 Linux with glibc)
-        with:
-          command: build
-          use-cross: true
-          args: --target aarch64-unknown-linux-gnu
-      - uses: actions-rs/cargo@v1
-        name: Run actions-rs/cargo@v1 build (ARM64 Linux with MUSL)
-        with:
-          command: build
-          use-cross: true
-          args: --target aarch64-unknown-linux-musl
-  test:
-    name: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: arduino/setup-protoc@v1
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - run: echo "PROTOC=$(which protoc)" >> $GITHUB_ENV
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly-2022-03-22
-          components: rustfmt, clippy
-          override: true
-      - uses: actions-rs/cargo@v1
-        name: Run actions-rs/cargo@v1 build
-        with:
-          command: build
-      - uses: actions-rs/cargo@v1
-        name: Run actions-rs/cargo@v1 test
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --all --all-features
-        env:
-          CARGO_INCREMENTAL: '0'
-          RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off'
-      - run: cargo install --locked grcov
-      - run: |
-          cargo install --locked grcov
-          grcov ./target/debug -s . --llvm --branch --guess-directory-when-missing --ignore-not-existing -t lcov -o coverage.txt
-      - run: |
-          sudo apt install lcov -y
-          lcov --extract coverage.txt -o coverage.txt 'src/*'
-      - if: success()
-        uses: codecov/codecov-action@v2.1.0
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          file: coverage.txt
-      - uses: actions-rs/cargo@v1
-        name: Run actions-rs/cargo@v1 fmt
+      - name: Run cargo fmt
+        uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: --all -- --check
-      - uses: actions-rs/cargo@v1
-        name: Run actions-rs/cargo@v1 check
+      - name: Run cargo clippy
+        uses: actions-rs/cargo@v1
         with:
-          command: check
-          args: --all --all-targets --all-features
-      - uses: actions-rs/clippy-check@v1
-        name: Run actions-rs/cargo@v1 clippy
+          command: clippy
+          args: -- -Dwarnings
+  bazel:
+    name: bazel
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            bazel-cache: ~/.cache/bazel
+          - os: macos-latest
+            bazel-cache: /var/tmp/_bazel_runner/cache
+    steps:
+      - uses: actions/checkout@v2
+      - name: Mount bazel cache
+        uses: actions/cache@v1
         with:
-          args: --all-features --workspace
-          token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ matrix.bazel-cache }}
+          key: ${{ runner.os }}-bazel-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-bazel-
+      - name: Run bazel build
+        run: bazel build //... --announce_rc --noshow_progress --verbose_failures --local_ram_resources=7000
+      - name: Run bazel test
+        run: bazel test //... --announce_rc --noshow_progress --verbose_failures --local_ram_resources=7000 --test_output=all
+      - name: Run bazel coverage
+        if: matrix.os == 'ubuntu-latest'
+        run: bazel coverage //... --announce_rc --noshow_progress --verbose_failures --local_ram_resources=7000 --test_output=all
+      - uses: codecov/codecov-action@v3
+        if: success() && matrix.os == 'ubuntu-latest'
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: bazel-out/k8-fastbuild/testlogs/rust_grpc_health_check_binary_test/coverage.dat

@@ -1,7 +1,15 @@
 #![forbid(unsafe_code)]
-
+use error::{Error, ErrorKind};
+use health_service::{health_client::HealthClient, serving_status, HealthCheckRequest};
+use input::{Config, Opts};
 #[cfg(feature = "mimalloc")]
 use mimalloc::MiMalloc;
+use std::fs;
+use std::time::Duration;
+use tonic::{
+    transport::{Certificate, Channel, ClientTlsConfig, Identity},
+    Request,
+};
 
 #[cfg(feature = "mimalloc")]
 #[global_allocator]
@@ -11,6 +19,8 @@ mod error;
 mod input;
 
 mod health_service {
+    #![allow(clippy::derive_partial_eq_without_eq)]
+
     tonic::include_proto!("grpc.health.v1");
 
     use health_check_response::ServingStatus;
@@ -25,18 +35,17 @@ mod health_service {
 
 /// grpc-health-check
 #[cfg(not(tarpaulin_include))]
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    use error::{Error, ErrorKind};
-    use health_service::{health_client::HealthClient, serving_status, HealthCheckRequest};
-    use input::{Config, Opts};
-    use std::fs;
-    use std::time::Duration;
-    use tonic::{
-        transport::{Certificate, Channel, ClientTlsConfig, Identity},
-        Request,
-    };
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .expect("build runtime");
 
+    let local = tokio::task::LocalSet::new();
+    local.block_on(&rt, run())
+}
+
+async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let mut opts: Opts = Opts::new();
 
     if opts.config.is_some() {
@@ -50,7 +59,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if opts.port.is_none() {
         return Err(Error::new(ErrorKind::InvalidConfig)
-            .with("Undefined port")
+            .with("undefined port")
             .into());
     }
 
@@ -71,7 +80,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let endpoint = Channel::from_shared(uri).map_err(Error::from_http)?;
 
     if opts.verbose {
-        println!("URI: {}", endpoint.uri());
+        println!("uri: {}", endpoint.uri());
     }
 
     let channel = match opts.tls_ca_cert.is_some() {
@@ -84,20 +93,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 true => {
                     if opts.tls_client_cert.is_none() {
                         return Err(Error::new(ErrorKind::InvalidConfig)
-                            .with("TLS client certificate: Empty file path")
+                            .with("tls client certificate: empty file path")
                             .into());
                     } else if opts.tls_client_key.is_none() {
                         return Err(Error::new(ErrorKind::InvalidConfig)
-                            .with("TLS client key: Empty file path")
+                            .with("tls client key: empty file path")
                             .into());
                     }
 
-                    let client_cert = tokio::fs::read(opts.tls_client_cert.unwrap())
-                        .await
-                        .map_err(Error::from_io)?;
-                    let client_key = tokio::fs::read(opts.tls_client_key.unwrap())
-                        .await
-                        .map_err(Error::from_io)?;
+                    let client_cert =
+                        fs::read(opts.tls_client_cert.unwrap()).map_err(Error::from_io)?;
+                    let client_key =
+                        fs::read(opts.tls_client_key.unwrap()).map_err(Error::from_io)?;
                     let client_identity = Identity::from_pem(client_cert, client_key);
 
                     ClientTlsConfig::new().identity(client_identity)
@@ -117,7 +124,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     .await
     .map_err(Error::from_transport)?;
 
-    // Create a new gRPC client
+    // Create a new gRPC client.
     let mut client = HealthClient::new(channel);
 
     let request = Request::new(HealthCheckRequest {
@@ -167,6 +174,6 @@ mod tests {
         assert!(serving_status(ServingStatus::Unknown as i32).is_err());
         assert!(serving_status(ServingStatus::NotServing as i32).is_err());
         assert!(serving_status(ServingStatus::ServiceUnknown as i32).is_err());
-        assert!(serving_status(99 as i32).is_err());
+        assert!(serving_status(99_i32).is_err());
     }
 }

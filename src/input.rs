@@ -133,7 +133,7 @@ pub struct Config {
 impl Config {
     /// Parses the YAML string it into a config struct.
     pub fn parse_yaml(content: &str) -> serde_yaml::Result<Config> {
-        serde_yaml::from_str(&content)
+        serde_yaml::from_str(content)
     }
 }
 

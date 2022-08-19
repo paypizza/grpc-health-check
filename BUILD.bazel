@@ -1,0 +1,130 @@
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+load("@rules_rust//crate_universe:defs.bzl", "crates_vendor")
+load("@rules_rust//cargo:cargo_build_script.bzl", "cargo_build_script")
+load("@rules_rust//rust:defs.bzl",
+    "rust_binary",
+    "rust_clippy",
+    "rust_library",
+    "rustfmt_test",
+    "rust_test",
+)
+load("//crates:defs.bzl", "aliases", "all_crate_deps")
+
+package(default_visibility = ["//visibility:private"])
+
+exports_files(["Cargo.toml", "Cargo.Bazel.lock"], ["//visibility:public"])
+
+exports_files(["proto/health.proto"])
+
+bzl_library(
+    name = "bzl_lib",
+    srcs = glob(["**/*.bzl"]) + [
+        "//crates:defs.bzl",
+        "//crates:crates.bzl",
+    ],
+    visibility = ["//:__pkg__"],
+)
+
+# bazel run //:crates_vendor
+crates_vendor(
+    name = "crates_vendor",
+    manifests = ["@paypizza_grpc_health_check//:Cargo.toml"],
+    cargo_lockfile = "//:Cargo.Bazel.lock",
+    mode = "remote",
+    vendor_path = "crates",
+    tags = ["manual"],
+)
+
+cargo_build_script(
+    name = "rust_grpc_health_check_build_script",
+    srcs = [":build.rs"],
+    build_script_env = select({
+        "@platforms//os:macos": {
+            "PROTOC": "$(execpath @com_google_protobuf_protoc_macos_x86_64//:protoc)",
+        },
+        "@platforms//os:linux": {
+            "PROTOC": "$(execpath @com_google_protobuf_protoc_linux_x86_64//:protoc)",
+        },
+    }),
+    deps = all_crate_deps(build = True),
+    data = [
+        "proto/health.proto",
+        "proto/test.proto",
+    ] + select({
+        "@platforms//os:macos": [
+            "@com_google_protobuf_protoc_macos_x86_64//:protoc",
+        ],
+        "@platforms//os:linux": [
+            "@com_google_protobuf_protoc_linux_x86_64//:protoc",
+        ],
+    }),
+)
+
+rust_binary(
+    name = "rust_grpc_health_check_binary",
+    aliases = aliases(),
+    srcs = [
+        "src/error.rs",
+        "src/input.rs",
+        "src/main.rs",
+    ],
+    deps = [":rust_grpc_health_check_build_script"] + all_crate_deps(),
+)
+
+rust_test(
+    name = "rust_grpc_health_check_binary_test",
+    crate = ":rust_grpc_health_check_binary",
+    deps = all_crate_deps(),
+)
+
+rust_library(
+    name = "rust_integration_test_library",
+    testonly = True,
+    srcs = [
+        "tests/connection.rs",
+        "tests/lib.rs",
+        "tests/options.rs",
+    ],
+    deps = [":rust_grpc_health_check_build_script"] + all_crate_deps(
+        normal = True,
+        normal_dev = True,
+    ),
+)
+
+rust_test(
+    name = "rust_integration_test",
+    crate = ":rust_integration_test_library",
+    env = {
+        "CARGO_BIN_EXE_grpc-health-check": "$(rootpath //:rust_grpc_health_check_binary)",
+    },
+    data = [":rust_grpc_health_check_binary"],
+)
+
+rustfmt_test(
+    name = "rust_grpc_health_check_binary_fmt_test",
+    targets = [
+        ":rust_grpc_health_check_binary",
+        ":rust_grpc_health_check_binary_test",
+        ":rust_integration_test_library",
+        ":rust_integration_test",
+    ],
+)
+
+rust_clippy(
+    name = "rust_grpc_health_check_binary_clippy_test",
+    testonly = True,
+    deps = [
+        ":rust_grpc_health_check_binary",
+        ":rust_grpc_health_check_binary_test",
+        ":rust_integration_test_library",
+        ":rust_integration_test",
+    ],
+)
+
+genrule(
+    name = "binary",
+    srcs = [":rust_grpc_health_check_binary"],
+    outs = ["grpc-health-check"],
+    cmd = "cp $< $@",
+    visibility = ["//visibility:public"],
+)

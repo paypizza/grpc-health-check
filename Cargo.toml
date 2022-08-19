@@ -1,14 +1,12 @@
 [package]
 name = "grpc_health_check"
 version = "0.1.1"
-edition = "2018"
-include = ["build.rs"]
+edition = "2021"
 publish = false
 
-[workspace]
-members = [
-  "tests/integration_tests"
-]
+[profile.release]
+lto = true
+panic = "abort"
 
 [[bin]]
 name = "grpc-health-check"
@@ -17,16 +15,21 @@ doctest = false
 
 [dependencies]
 mimalloc = { version = "0.1.28", optional = true }
-prost = "0.9"
-serde = { version = "1.0.136", features = ["derive"] }
-serde_yaml = "0.8.23"
+prost = "0.11.0"
+serde = { version = "1.0.142", features = ["derive"] }
+serde_yaml = "0.9.3"
 structopt = "0.3"
-tokio = { version = "1.17.0", features = ["full"] }
-tonic = { version = "0.6.2", features = ["prost", "tls", "transport"] }
+tokio = { version = "1.17.0", features = ["net", "rt"], default-features = false }
+tonic = { version = "0.8.0", features = ["tls"] }
+
+[dev-dependencies]
+assert_cmd = "2.0.4"
+futures-util = "0.3"
+predicates = "2"
+tokio = { version = "1.4.0", features = ["macros", "rt-multi-thread", "net"] }
+tokio-stream = { version = "0.1", features = ["net"] }
+tonic = "0.8.0"
+tonic-health = "0.7.0"
 
 [build-dependencies]
-tonic-build = { version = "0.6.2", features = ["transport", "prost"] }
-
-[profile.release]
-lto = true
-panic = "abort"
+tonic-build = { version = "0.8.0", features = ["prost", "transport"] }
