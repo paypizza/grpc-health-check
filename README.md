@@ -84,6 +84,43 @@ $ zypper ar https://copr.fedorainfracloud.org/coprs/paypizza/community/repo/open
 $ zypper in grpc-health-check
 ```
 
+### Bazel
+
+WORKSPACE
+
+```starlark
+http_archive(
+    name = "paypizza_grpc_health_check",
+    strip_prefix = "grpc-health-check-bc9752df03de04dc8f1bc23990bb7e10838698b5",
+    sha256 = "f6d4fcdd0b67b07193479fe6c6689d9a7540abb5234c3a096b112f43fd5cf03c",
+    urls = [
+        "https://github.com/paypizza/grpc-health-check/archive/bc9752df03de04dc8f1bc23990bb7e10838698b5.tar.gz",
+    ],
+)
+
+load(
+    "@paypizza_grpc_health_check//:defs.bzl",
+    "paypizza_grpc_health_check_crate_repositories",
+    "paypizza_grpc_health_check_repositories",
+)
+
+paypizza_grpc_health_check_repositories()
+
+paypizza_grpc_health_check_crate_repositories()
+```
+
+BUILD.bazel
+
+```
+load("@io_bazel_rules_docker//container:container.bzl", "container_layer")
+
+container_layer(
+    name = "grpc_health_check_container_layer",
+    directory = "/usr/bin",
+    files = ["@paypizza_grpc_health_check//:binary"],
+)
+```
+
 ## Flags
 
 **--help**, **-h**
